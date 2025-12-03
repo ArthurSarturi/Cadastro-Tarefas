@@ -1,105 +1,166 @@
 <!DOCTYPE html>
+<html>
 
-    <head> 
+<head>
+    <title>Tarefas</title>
 
-        <title> Tarefas </title>
+    <style>
+        .inputField {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 400px;
+        }
 
-        <style>
-            .inputField {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+        .tarefa-urgente {
+            color: red;
+            font-weight: bold;
+        }
 
-                width: 400px;
-            }
+        .tarefa {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
 
-        </style>
+        .mensagem-vazia {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
 
-    </head>
+<body>
 
-    <body> 
-        
-        <div class="mainContainer"> 
-            <div class="inputField">
-                
-                <label for="prioridade"> PRIORIDADE: </label>
-                <input id="prioridade"> </input>
-                
-                <label for="descricao"> DESCRIÇÃO: </label>
-                <input id="descricao"> </input>
-                
-                <label for="local"> LOCAL: </label>
-                <input type="number" id="local"> </input>
-                
-                <label for="recursosNecessarios"> RECURSOS NECESSARIOS: </label>
-                <input id="recursosNecessarios"> </input>
-                
-                <label for="dataLimite"> DATA LIMITE: </label>
-                <input type="date" id="dataLimite"> </input>
-                
-                <label for="matricula"> MATRICULA: </label>
-                <input type="number" id="matricula"> </input>
+    <div class="mainContainer">
+        <h2>Cadastro de Tarefas</h2>
 
-                <button type="button" onclick="salvar()"> SALVAR </button>
+        <div class="inputField">
 
-            </div>
+            <label for="prioridade"> PRIORIDADE: </label>
+            <select id="prioridade">
+                <option value="">Selecione</option>
+                <option value="Baixa">Baixa</option>
+                <option value="Normal">Normal</option>
+                <option value="Urgente">Urgente</option>
+            </select>
 
-        </div>    
-            
-        <div class="Lista" id="Lista"> 
-            
+            <label for="descricao"> DESCRIÇÃO: </label>
+            <input id="descricao">
+
+            <label for="local"> LOCAL: </label>
+            <input id="local">
+
+            <label for="recursosNecessarios"> RECURSOS NECESSÁRIOS (separe por vírgula): </label>
+            <input id="recursosNecessarios">
+
+            <label for="dataLimite"> DATA LIMITE: </label>
+            <input type="datetime-local" id="dataLimite">
+
+            <label for="matricula"> MATRÍCULA: </label>
+            <input type="number" id="matricula">
+
+            <button type="button" onclick="salvar()"> SALVAR </button>
         </div>
+    </div>
 
-        <script> 
-            const urlBase = "";
+    <hr>
 
-            async function atualizar() {
-                const response = await fetch(urlBase + 'tarefas');
-                const dados = await response.json();
-                            
-                const tabela = document.getElementById("Lista");
-                tabela.innerHTML = "";
+    <div>
+        <h2>Lista de Tarefas</h2>
+        <div id="Lista"></div>
+    </div>
 
-                dados.forEach(element => {
-                    const div = document.createElement("div");
-                    div.innerHTML = `
-                        <p><b>Prioridade:</b> ${element.prioridade}</p>
-                        <p><b>Descrição:</b> ${element.descricao}</p>
-                        <p><b>Local:</b> ${element.local}</p>
-                        <p><b>Recursos:</b> ${element.recursosNecessarios}</p>
-                        <p><b>Data Limite:</b> ${element.dataLimite}</p>
-                        <p><b>Matrícula:</b> ${element.matricula}</p>
-                        <hr>
-                    `;
-                    tabela.appendChild(div);
-                });
+    <script>
+
+        const urlBase = ""; 
+        // COLOQUE AQUI SUA URL DO BACKEND, por exemplo:
+        // const urlBase = "http://localhost:3000/";
+
+        async function atualizar() {
+            const response = await fetch(urlBase + "tarefas");
+            const dados = await response.json();
+
+            const tabela = document.getElementById("Lista");
+            tabela.innerHTML = "";
+
+            // Caso não exista nenhuma tarefa
+            if (dados.length === 0) {
+                tabela.innerHTML = `<p class="mensagem-vazia">Nenhuma tarefa cadastrada</p>`;
+                return;
             }
 
-            async function salvar() {
-                const dadosExemplo = {
-                    prioridade: document.getElementById("prioridade").value,
-                    descricao: document.getElementById("descricao").value,
-                    local: parseInt(document.getElementById("local").value),
-                    recursosNecessarios: document.getElementById("recursosNecessarios").value.split(","), 
-                    dataLimite: document.getElementById("dataLimite").value,
-                    matricula: parseInt(document.getElementById("matricula").value)
-                };
+            dados.forEach(element => {
 
-                console.log(dadosExemplo);
+                const div = document.createElement("div");
 
-                await fetch(urlBase + "tarefas", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json; charset=UTF-8'
-                    },
-                    body: JSON.stringify(dadosExemplo)  
-                });
+                // Se for urgente, adiciona classe para ficar vermelho
+                div.className = element.prioridade === "Urgente"
+                    ? "tarefa tarefa-urgente"
+                    : "tarefa";
 
-                atualizar(); 
+                div.innerHTML = `
+                    <p><b>Prioridade:</b> ${element.prioridade}</p>
+                    <p><b>Descrição:</b> ${element.descricao}</p>
+                    <p><b>Local:</b> ${element.local}</p>
+                    <p><b>Recursos:</b> ${element.recursosNecessarios.join(", ")}</p>
+                    <p><b>Data Limite:</b> ${element.dataLimite}</p>
+                    <p><b>Matrícula:</b> ${element.matricula}</p>
+                `;
+
+                tabela.appendChild(div);
+            });
+        }
+
+        function validarCampos(dados) {
+
+            // Campos obrigatórios
+            if (!dados.prioridade || !dados.descricao || !dados.local
+                || !dados.dataLimite || !dados.matricula) {
+                alert("Preencha todos os campos obrigatórios!");
+                return false;
             }
 
-        </script>
+            // Prioridade válida
+            const prioridadesValidas = ["Baixa", "Normal", "Urgente"];
+            if (!prioridadesValidas.includes(dados.prioridade)) {
+                alert("Prioridade inválida!");
+                return false;
+            }
 
-    </body>
+            return true;
+        }
+
+        async function salvar() {
+
+            const dadosExemplo = {
+                prioridade: document.getElementById("prioridade").value,
+                descricao: document.getElementById("descricao").value,
+                local: document.getElementById("local").value,
+                recursosNecessarios: document.getElementById("recursosNecessarios").value.split(",").map(i => i.trim()),
+                dataLimite: document.getElementById("dataLimite").value,
+                matricula: parseInt(document.getElementById("matricula").value)
+            };
+
+            // Validação
+            if (!validarCampos(dadosExemplo)) return;
+
+            await fetch(urlBase + "tarefas", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json; charset=UTF-8"
+                },
+                body: JSON.stringify(dadosExemplo)
+            });
+
+            atualizar();
+        }
+
+        atualizar(); // Carrega a lista ao abrir a página
+
+    </script>
+
+</body>
 
 </html>
